@@ -3,7 +3,7 @@ from collections import defaultdict
 import subprocess
 import urllib.request 
 
-CODE_CDN = "https://www.geeksforgeeks.org/"
+CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
 
 
 class Direction:
@@ -72,9 +72,9 @@ def check_for_updates():
             raise Exception("outdated code")
     except:
         print(f"Your code may be outdated. Go get a new version from {CODE_CDN}.")
-        userinput = input("[Y]/no, continue: ").lower() 
-    finally:
-        print("code is fully updated")
+        userinput = input("[Y]/override, continue: ").lower() 
+        if userinput != "override, continue":
+            exit()
 
 
 check_for_updates()
