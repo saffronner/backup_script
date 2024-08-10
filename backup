@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+from collections import defaultdict
+import subprocess
+import urllib.request 
+
+CODE_CDN = "https://www.geeksforgeeks.org/"
+
+
+class Direction:
+    """
+    This class ...
+
+    Subclasses shall specify directions of backups and corresponding data such as commands needed to run.
+    """
+    src_desc: str = "X"
+    dest_desc: str = "X"
+    id: str = "X"
+    backup_commands: list[list[str]] = [["echo", "do nothing"]]
+
+class LapToRsync(Direction):
+    src_desc: str = "laptop"
+    dest_desc: str = "rsync.net"
+    id: str = "1"
+    backup_commands: list[list[str]] = [["echo", "do nothing rsync"]]
+
+class LapToSSD(Direction):
+    src_desc: str = "laptop"
+    dest_desc: str = "external SSD"
+    id: str = "2"
+    backup_commands: list[list[str]] = [["echo", "do nothing ssd"]]
+
+
+def direc_to_str(d: Direction):
+    return 
+
+def get_instructions() -> str:
+    partition: defaultdict[str, list[Direction]] = defaultdict(list)
+    instructions = "input list of directions to backup\n\n"
+
+    for direc in Direction.__subclasses__():
+        partition[direc.src_desc].append(direc)
+
+    for p in partition:
+        instructions += f"from {p}\n"
+        for direc in partition[p]:
+            instructions += f"- to {direc.dest_desc} ({direc.id})" + "\n"
+
+    instructions += "\n> "
+
+    return instructions
+
+def process_input(userinput: str):
+    direcs_to_run: list[Direction] = [direc for direc in Direction.__subclasses__() if direc.id in userinput]
+
+    print("are you sure you want to run:")
+    for direc in direcs_to_run:
+        print(f"- from {direc.src_desc} to {direc.dest_desc} (running {direc.backup_commands})")
+
+    userinput = input("[Y]/n: ").lower() 
+    if userinput != "" and userinput != "y":
+        return
+
+    for direc in direcs_to_run:
+        for command in direc.backup_commands:
+            subprocess.run(command)
+
+def check_for_updates():
+    try:
+        cdn_code = urllib.request.urlopen(CODE_CDN).read()
+        current_code = open(__file__).read()
+        if cdn_code != current_code:
+            raise Exception("outdated code")
+    except:
+        print(f"Your code may be outdated. Go get a new version from {CODE_CDN}.")
+        userinput = input("[Y]/no, continue: ").lower() 
+    finally:
+        print("code is fully updated")
+
+
+check_for_updates()
+
+process_input(input(get_instructions()))
