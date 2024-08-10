@@ -66,8 +66,10 @@ def process_input(userinput: str):
 
 def check_for_updates():
     try:
-        cdn_code = urllib.request.urlopen(CODE_CDN).read()
+        cdn_code = urllib.request.urlopen(CODE_CDN).read().decode()
         current_code = open(__file__).read()
+        print(f"cdn code:\n{cdn_code}")
+        print(f"curr code:\n{current_code}")
         if cdn_code != current_code:
             raise Exception("outdated code")
     except:
