@@ -1,9 +1,32 @@
 #!/usr/bin/env python3
 from collections import defaultdict
 import subprocess
-import urllib.request 
+import urllib.request
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
+VERSION = "1.0.0"
+
+LAPTOP_EXCLUDE = [
+    ".steam",
+    "snap",
+    ".cache",
+    "discord",
+]
+
+
+def rsync_exclude(
+    src: str, dest: str, rsync_args: list[str] = [], exclude: list[str] = []
+) -> list[str]:
+    """returns a list of args that subprocess.run can call"""
+    ans = []
+    ans.append("rsync")
+    ans.extend(rsync_args)
+    for ex in exclude:
+        ans.append("--exclude")
+        ans.append(ex)
+    ans.append(src)
+    ans.append(dest)
+    return ans
 
 
 class Direction:
@@ -12,26 +35,93 @@ class Direction:
 
     Subclasses shall specify directions of backups and corresponding data such as commands needed to run.
     """
+
     src_desc: str = "X"
     dest_desc: str = "X"
     id: str = "X"
     backup_commands: list[list[str]] = [["echo", "do nothing"]]
 
+
+class SDDMemoriesToRsync(Direction):
+    src_desc: str = "SDD memories"
+    dest_desc: str = "rsync.net"
+    id: str = "0"
+    backup_commands: list[list[str]] = [
+        rsync_exclude(
+            src="/media/saffron/saffron's/memories/",
+            dest="fm2128@fm2128.rsync.net:memories/",
+            rsync_args=["-aP"],
+        )
+    ]
+
+
 class LapToRsync(Direction):
     src_desc: str = "laptop"
     dest_desc: str = "rsync.net"
     id: str = "1"
-    backup_commands: list[list[str]] = [["echo", "do nothing rsync"]]
+    backup_commands: list[list[str]] = [
+        rsync_exclude(
+            src="/home/saffron/",
+            dest="fm2128@fm2128.rsync.net:saffron_homedir/",
+            rsync_args=["-aP"],
+            # rsync_args=["-aP", "--dry-run"],
+            exclude=LAPTOP_EXCLUDE,
+        )
+    ]
+
 
 class LapToSSD(Direction):
     src_desc: str = "laptop"
     dest_desc: str = "external SSD"
     id: str = "2"
-    backup_commands: list[list[str]] = [["echo", "do nothing ssd"]]
+    backup_commands: list[list[str]] = [
+        rsync_exclude(
+            src="/home/saffron/",
+            dest="/media/saffron/saffron's/saffron_homedir/",
+            rsync_args=["-aP"],
+            exclude=LAPTOP_EXCLUDE,
+        )
+    ]
+
+
+# class LapToPrism(Direction):
+#     src_desc: str = "laptop"
+#     dest_desc: str = "PRISM NAS"
+#     id: str = "3"
+#     backup_commands: list[list[str]] = [["echo", "TODO"]]
+
+
+class PhoneToRsync(Direction):
+    src_desc: str = "phone"
+    dest_desc: str = "rsync.net"
+    id: str = "4"
+    backup_commands: list[list[str]] = [
+        [
+            "rsync",
+            "-aPL",
+            "/data/data/com.termux/files/home/",
+            "fm2128@fm2128.rsync.net:phone_homedir/",
+        ]
+    ]
+
+
+class RsyncPhoneToSSD(Direction):
+    src_desc: str = "rsync.net:phone_homedir"
+    dest_desc: str = "external SSD"
+    id: str = "5"
+    backup_commands: list[list[str]] = [
+        [
+            "rsync",
+            "-aPL",
+            "fm2128@fm2128.rsync.net:phone_homedir/",
+            "/media/saffron/saffron's/phone_homedir/",
+        ]
+    ]
 
 
 def direc_to_str(d: Direction):
-    return 
+    return
+
 
 def get_instructions() -> str:
     partition: defaultdict[str, list[Direction]] = defaultdict(list)
@@ -49,14 +139,19 @@ def get_instructions() -> str:
 
     return instructions
 
+
 def process_input(userinput: str):
-    direcs_to_run: list[Direction] = [direc for direc in Direction.__subclasses__() if direc.id in userinput]
+    direcs_to_run: list[Direction] = [
+        direc for direc in Direction.__subclasses__() if direc.id in userinput
+    ]
 
     print("are you sure you want to run:")
     for direc in direcs_to_run:
-        print(f"- from {direc.src_desc} to {direc.dest_desc} (running {direc.backup_commands})")
+        print(
+            f"- from {direc.src_desc} to {direc.dest_desc} (running {direc.backup_commands})"
+        )
 
-    userinput = input("[Y]/n: ").lower() 
+    userinput = input("[Y]/n: ").lower()
     if userinput != "" and userinput != "y":
         return
 
@@ -64,19 +159,28 @@ def process_input(userinput: str):
         for command in direc.backup_commands:
             subprocess.run(command)
 
+
+def get_version(backup_script_code: str) -> str:
+    return [line for line in backup_script_code.splitlines() if "VERSION" in line][0]
+
+
 def check_for_updates():
     try:
-        cdn_code = urllib.request.urlopen(CODE_CDN).read().decode()
         current_code = open(__file__).read()
+        print(f"running saffron backup script {get_version(current_code)}")
+        cdn_code = urllib.request.urlopen(CODE_CDN).read().decode()
+        print(f"CDN script at {get_version(cdn_code)}")
         if cdn_code != current_code:
             raise Exception("outdated code")
     except:
         print(f"Your code may be outdated. Go get a new version from {CODE_CDN}.")
-        userinput = input("[Y]/override, continue: ").lower() 
-        if userinput != "override, continue":
+        userinput = input("[Y]/override: ").lower()
+        if userinput != "override":
             exit()
 
 
 check_for_updates()
 
 process_input(input(get_instructions()))
+
+# TODO add parser for stuff like --verbose, --dry-run????, --idk theres others trust
