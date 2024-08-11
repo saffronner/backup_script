@@ -2,9 +2,10 @@
 from collections import defaultdict
 import subprocess
 import urllib.request
+import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -12,6 +13,28 @@ LAPTOP_EXCLUDE = [
     ".cache",
     "discord",
 ]
+
+
+parser = argparse.ArgumentParser(
+    description=f"saffron's backup script version {VERSION}",
+    epilog='"... and seemingly every type of love <3"',
+)
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="show extra debug messages"
+)
+mut_exc = parser.add_mutually_exclusive_group()
+mut_exc.add_argument(
+    "--force", action="store_true", help="run script without checking CDN for code updates"
+)
+mut_exc.add_argument(
+    "--update", action="store_true", help="check CDN for updates and exit"
+)
+mut_exc.add_argument(
+    "--upgrade", action="store_true", help="download code from CDN"
+)
+mut_exc.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+args = parser.parse_args()
 
 
 def rsync_exclude(
@@ -26,6 +49,10 @@ def rsync_exclude(
         ans.append(ex)
     ans.append(src)
     ans.append(dest)
+
+    if args.verbose:
+        print(f"rsync_exclude generated: {ans}")
+
     return ans
 
 
@@ -173,14 +200,27 @@ def check_for_updates():
         if cdn_code != current_code:
             raise Exception("outdated code")
     except:
-        print(f"Your code may be outdated. Go get a new version from {CODE_CDN}.")
-        userinput = input("[Y]/override: ").lower()
-        if userinput != "override":
-            exit()
+        print(f"{parser.prog} may be outdated. Go get a new version from {CODE_CDN}.")
+        if not args.update:
+            if input("[Y]/override: ").lower() != "override":
+                exit()
+        return
+    
+    if args.update:
+        print(f"{parser.prog} is up to date.")
 
 
-check_for_updates()
+def main():
+    if args.update:
+        check_for_updates()
+    elif args.upgrade:
+        to_run =  ["curl", "-O", CODE_CDN, __file__]
+        if args.verbose:
+            print(f"running {to_run}")
+        subprocess.run(to_run)
+    else:
+        check_for_updates()
+        process_input(input(get_instructions()))
 
-process_input(input(get_instructions()))
 
-# TODO add parser for stuff like --verbose, --dry-run????, --idk theres others trust
+main()
