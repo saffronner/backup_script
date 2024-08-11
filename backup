@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -219,7 +219,8 @@ def main():
             print(f"running {to_run}")
         subprocess.run(to_run)
     else:
-        check_for_updates()
+        if not args.force:
+            check_for_updates()
         process_input(input(get_instructions()))
 
 
