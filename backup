@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -24,14 +24,14 @@ parser.add_argument(
 )
 mut_exc = parser.add_mutually_exclusive_group()
 mut_exc.add_argument(
-    "--force", action="store_true", help="run script without checking CDN for code updates"
+    "--force",
+    action="store_true",
+    help="run script without checking CDN for code updates",
 )
 mut_exc.add_argument(
     "--update", action="store_true", help="check CDN for updates and exit"
 )
-mut_exc.add_argument(
-    "--upgrade", action="store_true", help="download code from CDN"
-)
+mut_exc.add_argument("--upgrade", action="store_true", help="download code from CDN")
 mut_exc.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
 args = parser.parse_args()
@@ -205,7 +205,7 @@ def check_for_updates():
             if input("[Y]/override: ").lower() != "override":
                 exit()
         return
-    
+
     if args.update:
         print(f"{parser.prog} is up to date.")
 
@@ -214,10 +214,15 @@ def main():
     if args.update:
         check_for_updates()
     elif args.upgrade:
-        to_run =  ["curl", "-O", CODE_CDN, __file__]
+        to_run = [
+            ["rm", __file__],
+            ["curl", "-o", __file__, CODE_CDN],
+            ["chmod", "+x", __file__],
+        ]
         if args.verbose:
             print(f"running {to_run}")
-        subprocess.run(to_run)
+        for r in to_run:
+            subprocess.run(r)
     else:
         if not args.force:
             check_for_updates()
