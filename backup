@@ -12,6 +12,7 @@ LAPTOP_EXCLUDE = [
     "snap",
     ".cache",
     "discord",
+    "Code",
 ]
 
 
