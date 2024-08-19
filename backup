@@ -13,6 +13,7 @@ LAPTOP_EXCLUDE = [
     ".cache",
     "discord",
     "Code",
+    ".ssh",
 ]
 
 
