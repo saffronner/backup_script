@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -16,6 +16,9 @@ LAPTOP_EXCLUDE = [
     ".ssh",
 ]
 
+PHONE_EXCLUDE = [
+    ".ssh",
+]
 
 parser = argparse.ArgumentParser(
     description=f"saffron's backup script version {VERSION}",
@@ -125,31 +128,13 @@ class PhoneToRsync(Direction):
     dest_desc: str = "rsync.net"
     id: str = "4"
     backup_commands: list[list[str]] = [
-        [
-            "rsync",
-            "-aPL",
-            "/data/data/com.termux/files/home/",
-            "fm2128@fm2128.rsync.net:phone_homedir/",
-        ]
+        rsync_exclude(
+            src="/data/data/com.termux/files/home/",
+            dest="fm2128@fm2128.rsync.net:phone_homedir/",
+            rsync_args=["-aPL"],
+            exclude=PHONE_EXCLUDE,
+        )
     ]
-
-
-class RsyncPhoneToSSD(Direction):
-    src_desc: str = "rsync.net:phone_homedir"
-    dest_desc: str = "external SSD"
-    id: str = "5"
-    backup_commands: list[list[str]] = [
-        [
-            "rsync",
-            "-aPL",
-            "fm2128@fm2128.rsync.net:phone_homedir/",
-            "/media/saffron/saffron's/phone_homedir/",
-        ]
-    ]
-
-
-def direc_to_str(d: Direction):
-    return
 
 
 def get_instructions() -> str:
