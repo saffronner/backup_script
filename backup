@@ -5,12 +5,16 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
     "snap",
     ".cache",
+    "cache",
+    ".rustup",
+    ".cargo/registry",
+    "gems",
     "discord",
     "Code",
     ".ssh",
