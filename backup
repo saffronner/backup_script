@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -220,4 +220,7 @@ def main():
         process_input(input(get_instructions()))
 
 
-main()
+try:
+    main()
+except(KeyboardInterrupt):
+    print("\nKeyboardInterrupt receieved. Exiting.")
