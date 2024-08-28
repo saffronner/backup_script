@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -24,6 +24,12 @@ PHONE_EXCLUDE = [
     ".ssh",
 ]
 
+def check_for_updates():
+    ...
+
+def upgrade():
+    ...
+
 parser = argparse.ArgumentParser(
     description=f"saffron's backup script version {VERSION}",
     epilog='"... and seemingly every type of love <3"',
@@ -31,20 +37,27 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-v", "--verbose", action="store_true", help="show extra debug messages"
 )
-mut_exc = parser.add_mutually_exclusive_group()
-mut_exc.add_argument(
+parser.add_argument(
+    "-d", "--dir-append", default="", help="append to the src and dest dirs of the rsync call (remember trailing `/`!) e.g. `-d Desktop/cmu/`"
+)
+parser.add_argument(
+    "--rsync-args", default="", help='append to the list of args passed to internal rsync calls e.g. --rsync-args=-vvv'
+)
+parser.add_argument(
     "--force",
     action="store_true",
     help="run script without checking CDN for code updates",
 )
-mut_exc.add_argument(
-    "--update", action="store_true", help="check CDN for updates and exit"
-)
-mut_exc.add_argument("--upgrade", action="store_true", help="download code from CDN")
-mut_exc.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+subparsers = parser.add_subparsers(title="subcommands", dest="subcommand", metavar="\033[F")  # metavar: say a row of nothing by moving the cursor up, instead of `  {update,upgrade}`
+update_parser = subparsers.add_parser('update', help='checks for updates').set_defaults(func=check_for_updates)
+upgrade_parser = subparsers.add_parser('upgrade', help='replaces current code with CDN').set_defaults(func=upgrade)
 
 args = parser.parse_args()
-
+if args.dir_append != "" and args.dir_append[-1] != "/" and args.dir_append[0] != "/":
+    print(f"{parser.prog}: error: extra directory should be of the form `dir/dir/` (no leading /, yes trailing /)")
+    exit()
 
 def rsync_exclude(
     src: str, dest: str, rsync_args: list[str] = [], exclude: list[str] = []
@@ -52,12 +65,13 @@ def rsync_exclude(
     """returns a list of args that subprocess.run can call"""
     ans = []
     ans.append("rsync")
+    ans.append(args.rsync_args)
     ans.extend(rsync_args)
     for ex in exclude:
         ans.append("--exclude")
         ans.append(ex)
-    ans.append(src)
-    ans.append(dest)
+    ans.append(src + args.dir_append)
+    ans.append(dest + args.dir_append)
 
     if args.verbose:
         print(f"rsync_exclude generated: {ans}")
@@ -192,32 +206,27 @@ def check_for_updates():
             raise Exception("outdated code")
     except:
         print(f"{parser.prog} may be outdated. Go get a new version from {CODE_CDN}.")
-        if not args.update:
-            if input("[Y]/override: ").lower() != "override":
-                exit()
-        return
+        if input("[Y]/override: ").lower() != "override":
+            exit()
 
-    if args.update:
         print(f"{parser.prog} is up to date.")
 
 
+def upgrade():
+    to_run = [
+        ["rm", __file__],
+        ["curl", "-o", __file__, CODE_CDN],
+        ["chmod", "+x", __file__],
+    ]
+    if args.verbose:
+        print(f"running {to_run}")
+    for r in to_run:
+        subprocess.run(r)
+
 def main():
-    if args.update:
+    if not args.force:
         check_for_updates()
-    elif args.upgrade:
-        to_run = [
-            ["rm", __file__],
-            ["curl", "-o", __file__, CODE_CDN],
-            ["chmod", "+x", __file__],
-        ]
-        if args.verbose:
-            print(f"running {to_run}")
-        for r in to_run:
-            subprocess.run(r)
-    else:
-        if not args.force:
-            check_for_updates()
-        process_input(input(get_instructions()))
+    process_input(input(get_instructions()))
 
 
 try:
