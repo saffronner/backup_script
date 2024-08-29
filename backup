@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.7.0"
+VERSION = "1.7.1"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -23,6 +23,10 @@ LAPTOP_EXCLUDE = [
 PHONE_EXCLUDE = [
     ".ssh",
 ]
+
+
+def get_version(backup_script_code: str) -> str:
+    return [line for line in backup_script_code.splitlines() if "VERSION" in line][0]
 
 
 def check_for_updates():
@@ -221,10 +225,6 @@ def process_input(userinput: str):
     for direc in direcs_to_run:
         for command in direc.backup_commands:
             subprocess.run(command)
-
-
-def get_version(backup_script_code: str) -> str:
-    return [line for line in backup_script_code.splitlines() if "VERSION" in line][0]
 
 def main():
     if not args.force:
