@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -24,11 +24,34 @@ PHONE_EXCLUDE = [
     ".ssh",
 ]
 
+
 def check_for_updates():
-    ...
+    try:
+        current_code = open(__file__).read()
+        print(f"running saffron backup script {get_version(current_code)}")
+        cdn_code = urllib.request.urlopen(CODE_CDN).read().decode()
+        print(f"CDN script at {get_version(cdn_code)}")
+        if cdn_code != current_code:
+            raise Exception("outdated code")
+    except:
+        print(f"{parser.prog} may be outdated. Go get a new version from {CODE_CDN}.")
+        if input("[Y]/override: ").lower() != "override":
+            exit()
+
+        print(f"{parser.prog} is up to date.")
+
 
 def upgrade():
-    ...
+    print("upgrading")
+    to_run = [
+        ["rm", __file__],
+        ["curl", "-o", __file__, CODE_CDN],
+        ["chmod", "+x", __file__],
+    ]
+    if args.verbose:
+        print(f"running {to_run}")
+    for r in to_run:
+        subprocess.run(r)
 
 parser = argparse.ArgumentParser(
     description=f"saffron's backup script version {VERSION}",
@@ -51,10 +74,18 @@ parser.add_argument(
 parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
 subparsers = parser.add_subparsers(title="subcommands", dest="subcommand", metavar="\033[F")  # metavar: say a row of nothing by moving the cursor up, instead of `  {update,upgrade}`
-update_parser = subparsers.add_parser('update', help='checks for updates').set_defaults(func=check_for_updates)
-upgrade_parser = subparsers.add_parser('upgrade', help='replaces current code with CDN').set_defaults(func=upgrade)
 
+update_parser = subparsers.add_parser('update', help='checks for updates')
+update_parser.set_defaults(func=check_for_updates)
+
+upgrade_parser = subparsers.add_parser('upgrade', help='replaces current code with CDN')
+upgrade_parser.set_defaults(func=upgrade)
 args = parser.parse_args()
+
+if args.subcommand is not None:
+    args.func()
+    exit()
+
 if args.dir_append != "" and args.dir_append[-1] != "/" and args.dir_append[0] != "/":
     print(f"{parser.prog}: error: extra directory should be of the form `dir/dir/` (no leading /, yes trailing /)")
     exit()
@@ -194,34 +225,6 @@ def process_input(userinput: str):
 
 def get_version(backup_script_code: str) -> str:
     return [line for line in backup_script_code.splitlines() if "VERSION" in line][0]
-
-
-def check_for_updates():
-    try:
-        current_code = open(__file__).read()
-        print(f"running saffron backup script {get_version(current_code)}")
-        cdn_code = urllib.request.urlopen(CODE_CDN).read().decode()
-        print(f"CDN script at {get_version(cdn_code)}")
-        if cdn_code != current_code:
-            raise Exception("outdated code")
-    except:
-        print(f"{parser.prog} may be outdated. Go get a new version from {CODE_CDN}.")
-        if input("[Y]/override: ").lower() != "override":
-            exit()
-
-        print(f"{parser.prog} is up to date.")
-
-
-def upgrade():
-    to_run = [
-        ["rm", __file__],
-        ["curl", "-o", __file__, CODE_CDN],
-        ["chmod", "+x", __file__],
-    ]
-    if args.verbose:
-        print(f"running {to_run}")
-    for r in to_run:
-        subprocess.run(r)
 
 def main():
     if not args.force:
