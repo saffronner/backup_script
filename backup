@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.7.1"
+VERSION = "1.7.2"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -100,7 +100,8 @@ def rsync_exclude(
     """returns a list of args that subprocess.run can call"""
     ans = []
     ans.append("rsync")
-    ans.append(args.rsync_args)
+    if args.rsync_args != "":
+        ans.append(args.rsync_args)
     ans.extend(rsync_args)
     for ex in exclude:
         ans.append("--exclude")
