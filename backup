@@ -5,7 +5,7 @@ import urllib.request
 import argparse
 
 CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/backup"
-VERSION = "1.7.3"
+VERSION = "1.7.4"
 
 LAPTOP_EXCLUDE = [
     ".steam",
@@ -19,6 +19,7 @@ LAPTOP_EXCLUDE = [
     "Code",
     ".ssh",
     ".local/share/flatpak",
+    ".local/bin/bin_large",
 ]
 
 PHONE_EXCLUDE = [
