@@ -8,6 +8,7 @@ CODE_CDN = "https://raw.githubusercontent.com/saffronner/backup_script/main/back
 VERSION = "1.7.6"
 
 LAPTOP_EXCLUDE = [
+    "Downloads",
     ".steam",
     "snap",
     ".cache",
